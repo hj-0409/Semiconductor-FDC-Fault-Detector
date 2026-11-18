@@ -122,12 +122,11 @@ try:
     plt.tight_layout()
     st.pyplot(fig)
 
-    # --- 5. Gemini AI 설비 진단 ---
+# --- 5. Gemini AI 설비 진단 ---
     st.markdown("---")
     st.subheader("🤖 Gemini AI 설비 엔지니어 진단 리포트")
 
     if st.button("🚀 현재 FDC 결과로 AI 설비 진단 리포트 생성", type="primary"):
-        # Streamlit Secrets와 로컬 환경 변수 모두 지원
         GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY") if "GEMINI_API_KEY" in st.secrets else os.environ.get("GEMINI_API_KEY")
 
         if not GEMINI_API_KEY:
@@ -145,17 +144,32 @@ try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={GEMINI_API_KEY}"
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
-            with st.spinner("🤖 Gemini AI 설비 엔지니어가 챔버 이상 원인을 분석 중입니다..."):
+            with st.spinner("🤖 Gemini AI 설비 엔지니어가 챔버 이상 원인을 분석 중입니다 (트래픽 폭주 시 자동 재시도 중)..."):
                 try:
-                    res = requests.post(url, json=payload, timeout=30)
-                    data = res.json()
-                    if "candidates" in data:
-                        ai_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                        st.success(ai_text)
+                    import time
+                    from requests.adapters import HTTPAdapter
+                    from urllib3.util.retry import Retry
+
+                    # 503 등 서버 에러 발생 시 자동으로 3번까지 재시도하는 세션 설정
+                    session = requests.Session()
+                    retries = Retry(
+                        total=3,
+                        backoff_factor=1,  # 대기 시간 (1초, 2초, 4초...)
+                        status_forcelist=[502, 503, 504],
+                        raise_on_status=False
+                    )
+                    session.mount("https://", HTTPAdapter(max_retries=retries))
+
+                    res = session.post(url, json=payload, timeout=30)
+                    
+                    if res.status_code == 200:
+                        data = res.json()
+                        if "candidates" in data:
+                            ai_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                            st.success(ai_text)
+                        else:
+                            st.error(f"AI 응답 구조 오류: {data}")
                     else:
-                        st.error(f"AI 응답 오류: {data}")
+                        st.error(f"⚠️ 구글 AI 서버가 현재 혼잡합니다 (상태 코드: {res.status_code}). 잠시 후 다시 버튼을 눌러주세요.")
                 except Exception as e:
                     st.error(f"AI 진단 요청 실패: {e}")
-
-except Exception as e:
-    st.error(f"FDC 분석 실행 중 에러가 발생했습니다: {e}")
