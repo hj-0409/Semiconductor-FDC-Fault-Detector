@@ -142,7 +142,7 @@ try:
                 "2) 설비 엔지니어로서 즉시 조치해야 할 대응 방안을 3줄 이내로 전문가답게 진단해 줘."
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={GEMINI_API_KEY}"
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
             with st.spinner("🤖 Gemini AI 설비 엔지니어가 챔버 이상 원인을 분석 중입니다..."):
