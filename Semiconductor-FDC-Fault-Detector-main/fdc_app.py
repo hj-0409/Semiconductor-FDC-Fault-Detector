@@ -17,14 +17,13 @@ st.set_page_config(page_title="Semiconductor FDC & AI Diagnosis Platform", layou
 st.title("🚨 Semiconductor Fab Sensor FDC & AI Diagnosis Platform")
 st.markdown("반도체 팹 공정 센서 데이터를 기반으로 한 **실시간 FDC(이상 감지 및 분류) 및 Gemini AI 설비 진단 대시보드**입니다.")
 
-# 기본 UCI SECOM 데이터 로드 (캐싱 적용으로 슬라이더 조작 시 초고속 반응)
+# 기본 UCI SECOM 데이터 로드 (캐싱 적용)
 @st.cache_data
 def load_secom_data():
     data_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/secom/secom.data"
     label_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/secom/secom_labels.data"
     features = pd.read_csv(data_url, sep=r"\s+", header=None)
     labels = pd.read_csv(label_url, sep=r"\s+", header=None)
-    # UCI SECOM: 1 = Fail, -1 = Pass -> 이진 분류(1: Fail, 0: Pass)로 통일
     y = (labels[0].values == 1).astype(int)
     return features, y
 
@@ -64,7 +63,6 @@ try:
     features_cleaned = features_cleaned.fillna(features_cleaned.median())
     features_cleaned = features_cleaned.loc[:, features_cleaned.std() > 0]
 
-    # PCA 주성분 개수가 실제 센서 수보다 클 경우 자동 보정
     max_comp = min(features_cleaned.shape[0], features_cleaned.shape[1])
     actual_n_components = min(n_components, max_comp)
 
@@ -122,7 +120,7 @@ try:
     plt.tight_layout()
     st.pyplot(fig)
 
-# --- 5. Gemini AI 설비 진단 ---
+    # --- 5. Gemini AI 설비 진단 ---
     st.markdown("---")
     st.subheader("🤖 Gemini AI 설비 엔지니어 진단 리포트")
 
@@ -150,11 +148,10 @@ try:
                     from requests.adapters import HTTPAdapter
                     from urllib3.util.retry import Retry
 
-                    # 503 등 서버 에러 발생 시 자동으로 3번까지 재시도하는 세션 설정
                     session = requests.Session()
                     retries = Retry(
                         total=3,
-                        backoff_factor=1,  # 대기 시간 (1초, 2초, 4초...)
+                        backoff_factor=1,
                         status_forcelist=[502, 503, 504],
                         raise_on_status=False
                     )
@@ -173,3 +170,6 @@ try:
                         st.error(f"⚠️ 구글 AI 서버가 현재 혼잡합니다 (상태 코드: {res.status_code}). 잠시 후 다시 버튼을 눌러주세요.")
                 except Exception as e:
                     st.error(f"AI 진단 요청 실패: {e}")
+
+except Exception as e:
+    st.error(f"FDC 분석 실행 중 에러가 발생했습니다: {e}")
