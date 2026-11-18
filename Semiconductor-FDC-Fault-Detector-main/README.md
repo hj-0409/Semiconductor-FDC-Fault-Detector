@@ -1,50 +1,60 @@
-# 🔬 Semiconductor Fab FDC Sensor Fault Detection & AI Diagnosis Platform
+# 🚨 Semiconductor Fab Sensor FDC & AI Diagnosis Platform
 
-반도체 양산 팹(Fab) 제조 공정에서 발생하는 초고차원 센서 노이즈를 제어하고, 웨이퍼 결함(Fail)을 조기에 감지하는 **실시간 FDC(Fault Detection & Classification) 이상 진단 및 Gemini AI 설비 엔지니어링 웹 플랫폼**입니다.
-
----
-
-## 📌 프로젝트 개요 (Overview)
-- **대상 공정**: 실제 반도체 제조 공정 센서 데이터셋 (UCI SECOM, 1,567개 웨이퍼 측정치)
-- **직면 과제**: 590차원의 초고차원 센서 데이터, 결측치 및 다중공선성 노이즈, 극심한 정상(Pass) 대 불량(Fail) 클래스 불균형
-- **핵심 목표**: PCA 직교 기저 투영을 통한 차원 압축(590D -> 30D), 불균형 가중치 최적화 분류 알고리즘 구축, Streamlit 웹 대시보드 시각화 및 Gemini AI 실시간 팹 설비 진단 연동
+> **Real-time Fault Detection & Classification (FDC) Dashboard for Semiconductor Manufacturing Processes powered by Machine Learning and Gemini AI.**
 
 ---
 
-## 🔬 핵심 엔지니어링 메커니즘
-| 엔지니어링 단계 | 적용 기법 및 수식 | 물리적 / 공정적 목적 |
-| :--- | :--- | :--- |
-| **1. 센서 데이터 정제** | 결측치 > 50% 채널 제거, Median 대체, $\sigma=0$ 상수 센서 제거 | 고장 센서 및 결측치 노이즈 사전 차단 |
-| **2. PCA 차원 축소** | 공분산 행렬 고유값 분해 ($C = V \Lambda V^T$), 상위 30개 주성분 직교 투영 | 590차원의 다중공선성을 제거하고 공정 핵심 분산 보존 |
-| **3. 불균형 보정 분류** | L2 Ridge 페널티 ($\lambda=0.1$), Balanced Class Weight 로지스틱 회귀 | 양산 라인의 극소수 결함 웨이퍼 감지율(Recall) 극대화 |
-| **4. AI 설비 진단 연동** | 모델 이상 감지 결과 기반 Gemini AI API 자동 프롬프트 전송 | 챔버 내부 물리적 원인(플라즈마 불안정, 파티클 등) 및 즉각 조치 가이드 도출 |
+## 📌 1. 프로젝트 개요 (Overview)
+본 프로젝트는 반도체 제조 공정 중 발생하는 고차원 센서 데이터(UCI SECOM)를 활용하여 챔버 내 이상 징후를 실시간으로 탐지하고 분류하는 **FDC(Fault Detection & Classification)웹 대시보드 플랫폼**입니다. 
+단순한 통계 분석을 넘어, **PCA(주성분 분석)**를 통한 차원 축소와 **로지스틱 회귀(Logistic Regression)** 기반의 머신러닝 파이프라인, 그리고 **Google Gemini AI 설비 진단 리포트**를 결합하여 실무 현장에서 즉시 활용할 수 있도록 설계되었습니다.
 
 ---
 
-## 📊 결과 대시보드 (Analysis Results)
-
-![FDC Dashboard](fdc_analysis_result.png)
-
-### 📈 모델 성능 요약
-- **차원 압축률**: 590차원 → 30차원 (**약 94% 연산 차원 축소**)
-- **분산 보존율**: 상위 30개 주성분만으로 **전체 공정 분산 핵심 정보 보존**
-- **결함 진단 지표**: **ROC-AUC 0.70+ 달성** (극심한 불균형 공정 데이터 환경에서 유의미한 결함 판별력 확보)
+## 🛠️ 2. 핵심 기술 스택 (Tech Stack)
+* **Language**: Python 3.11+
+* **Web Framework**: Streamlit (Cloud Deployment)
+* **Machine Learning & Data Processing**: Scikit-learn (PCA, StandardScaler, Logistic Regression), Pandas, NumPy
+* **Visualization**: Matplotlib, Seaborn
+* **AI Diagnosis Integration**: Google Gemini API (with Auto-Retry Error Handling for 503 Traffic spikes)
 
 ---
 
-## 🛠 Tech Stack
-- **Language**: Python 3.11
-- **Data Engineering**: NumPy, Pandas, Scikit-learn (PCA, StandardScaler, LogisticRegression)
-- **Web Framework**: Streamlit
-- **AI Integration**: Google Gemini API (`requests`)
-- **Visualization**: Matplotlib, Seaborn
+## ⚙️ 3. 주요 기능 (Key Features)
+1. **실시간 센서 데이터 전처리 및 분석**
+   * 590차원의 노이즈가 포함된 UCI SECOM 센서 데이터를 정제(결측치 중앙값 대체, 상수 센서 제거)하고 표준화(StandardScaler) 수행.
+2. **인터랙티브 하이퍼파라미터 튜닝 (사이드바 제어판)**
+   * **PCA 주성분 개수 조절**: 차원 압축에 따른 누적 분산율(Scree Plot) 변화를 실시간 확인.
+   * **불량 판정 임계값(Threshold) 조절**: Recall(재현율)과 Precision(정밀도) 간의 트레이드오프를 직접 튜닝하며 Confusion Matrix 시각화 확인.
+3. **커스텀 데이터 업로드 (CSV)**
+   * 사용자 고유의 센서 데이터와 Pass/Fail 라벨이 포함된 CSV 파일을 업로드하여 커스텀 FDC 분석 수행 가능.
+4. **Gemini AI 기반 챔버 설비 진단 리포트**
+   * FDC 분석 결과(검증 웨이퍼 수, 이상 감지 건수, ROC-AUC 등)를 기반으로 Gemini AI 엔지니어가 챔버 이상 원인(플라즈마 밀도 불안정, 파티클 오염 등)과 즉각적인 조치 방안을 진단.
 
 ---
 
-## 🚀 실행 방법 (Quick Start)
+## 🚀 4. 로컬 실행 방법 (Quick Start)
+
 ```bash
-# 1. 필수 라이브러리 설치
-pip install streamlit numpy pandas scikit-learn matplotlib seaborn requests
+# 1. 저장소 클론
+git clone [https://github.com/hj-0409/Semiconductor-FDC-Fault-Detector.git](https://github.com/hj-0409/Semiconductor-FDC-Fault-Detector.git)
+cd Semiconductor-FDC-Fault-Detector
 
-# 2. FDC 웹 대시보드 실행
+# 2. 패키지 설치
+pip install -r requirements.txt
+
+# 3. Streamlit 앱 실행
 streamlit run fdc_app.py
+[Raw Sensor Data (590 Ch)] 
+       │
+       ▼
+[Data Cleaning & Standardization] 
+       │
+       ▼
+[PCA Dimensionality Reduction] ──> Scree Plot (Cumulative Variance)
+       │
+       ▼
+[Logistic Regression Classifier] ──> Confusion Matrix & Metrics (ROC-AUC, Recall)
+       │
+       ▼
+[Gemini AI Chamber Diagnostic Engine] ──> Expert Troubleshooting Report
+Developed by 전효재 (Jeon Hyojae) | Suncheon National University, Department of Electronic Engineering
